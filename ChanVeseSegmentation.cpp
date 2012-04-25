@@ -38,7 +38,7 @@ void ChanVeseBranch::BranchFurther(Branch **br1_, Branch **br2_)
 	br1->mean = mean;
 	br2->mean = mean;
 
-/*	if(maxf > mean && minf < mean) {
+	if(maxf > mean && minf < mean) {
 		br1->maxf = mean;
 		br2->minf = mean + 1;
 		br1->maxb = maxb;
@@ -48,7 +48,7 @@ void ChanVeseBranch::BranchFurther(Branch **br1_, Branch **br2_)
 		br2->minb = mean + 1;
 		br1->maxf = maxf;
 		br2->minf = minf;
-	}else */if(maxf-minf > maxb-minb) {
+	}else if(maxf-minf > maxb-minb) {
 		br1->maxf = (maxf+minf)/2;
 		br2->minf = br1->maxf+1;
 		br1->maxb = maxb;
@@ -87,7 +87,7 @@ void ChanVeseBranch::GetUnaries(gtype *bgUnaries, gtype *fgUnaries)
 int main()
 {
 	double totalTime = -clock();
-	const char *path = "google.png";
+	const char *path = "lake_google_maps.png";
 
 	int w,h;
 

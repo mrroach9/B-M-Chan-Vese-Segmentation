@@ -61,7 +61,7 @@ public:
 	}
 	
 	virtual void GetUnaries(gtype *bgUnaries, gtype *fgUnaries); //see cpp file
-/*
+
 	virtual bool prune() {
 		if (maxb < mean && maxf < mean) {
 			return true;
@@ -70,7 +70,6 @@ public:
 		}
 		return false;
 	}
-*/
 };
 
 
