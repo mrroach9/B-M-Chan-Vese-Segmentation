@@ -190,7 +190,7 @@ Branch *BranchAndMincut(int imwidth, int imheight,
 	if(nCalls)
 		*nCalls = statFlowCalls;
 
-	printf("Time spent in Branch-And-Mincut is %lf sec\n", double(clock()-start)/CLOCKS_PER_SEC);
+//	printf("Time spent in Branch-And-Mincut is %lf sec\n", double(clock()-start)/CLOCKS_PER_SEC);
 	return bestBranch;
 }
 
@@ -263,12 +263,12 @@ gtype EvaluateBound(Branch *br)
 bool BestFirstSearch()
 {
 	Branch *br = frontQueue.top().br;
-	printf("%d\t%d\n", br->bound, frontQueue.size());
+//	printf("%d\t%d\n", br->bound, frontQueue.size());
 	frontQueue.pop();
 
 	if(br->IsLeaf())
 	{
-		printf("Minimum found!\n");
+//		printf("Minimum found!\n");
 		return false;
 	}
 	

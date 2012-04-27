@@ -4,6 +4,8 @@ Lambda	Minima		MaxQLen	Time	{cf, cb}	Method
 10000	103435343	378	44.217	{18,100}	Original
 			368	40.993			+Mean Pruning
 			375	37.343			+Mean Partitioning
+				10.321			 Thumbsnail
 1000	61693807	305	21.007	{17,102}	Original
 			297	19.652			+Mean Pruning
 			286	15.680			+Mean Partitioning
+				 8.220			 Thumbsnail
