@@ -14,7 +14,10 @@ Implemented by Victor Lempitsky, 2008
 
 #include "ChanVeseSegmentation.h"
 #include "image.h"
+#include <math.h>
+#include <algorithm>
 #include <time.h>
+#include <stdlib.h>
 
 gtype ChanVeseBranch::mu; //bias
 gtype ChanVeseBranch::lambda; //smoothness
@@ -79,15 +82,9 @@ double calcMean(int* image, int w, int h) {
 	return total / (w*h);
 }
 
-ChanVeseBranch* runBranchAndMinCut(int* image, int w, int h, gtype lambda, gtype mu, int** segm) {
-	double mean = calcMean(image,w,h);
-	ChanVeseBranch root;
-	root.minb = 0;
-	root.maxb = (int)mean;
-	root.minf = (int)mean + 1;
-	root.maxf = 255;
-	root.image = image;
-	*segm = new int[w*h];
+ChanVeseBranch* runBranchAndMincut(int* image, int w, int h, gtype lambda, gtype mu, 
+								   int** segm, ChanVeseBranch root) {
+	int* segment = new int[w*h];
 
 	ChanVeseBranch::lambda = lambda; //smoothness in the Chan-Vese functional
 	ChanVeseBranch::mu = mu; //bias in the Chan-Vese functional 
@@ -105,14 +102,19 @@ ChanVeseBranch* runBranchAndMinCut(int* image, int w, int h, gtype lambda, gtype
 	PrepareGraph(w, h);
 	int nCalls;
 	ChanVeseBranch *resultLeaf = (ChanVeseBranch *)BranchAndMincut(
-		w, h, &root, *segm, true, NULL, pairwise, unaries, &nCalls); //main function call
+		w, h, &root, segment, true, NULL, pairwise, unaries, &nCalls); //main function call
 	delete[] pairwise;
 	delete[] unaries;
 
+	if (segm == NULL) {
+		delete[] segment;
+	} else {
+		*segm = segment;
+	}
 	return resultLeaf;
 }
 
-ChanVeseBranch* thumbsnailEstimate(const char* path, gtype lambda, gtype mu, int** segm) {
+ChanVeseBranch* thumbsnailEstimate(const char* path, gtype lambda, gtype mu, int** segm = NULL) {
 	int* image;
 	int w, h;
 	image = LoadImage8bpp<gtype>(path, w, h); 
@@ -121,7 +123,110 @@ ChanVeseBranch* thumbsnailEstimate(const char* path, gtype lambda, gtype mu, int
 		puts("Invalid path to the test image!");
 		return NULL;
 	}
-	return runBranchAndMinCut(image, w, h, lambda/2, mu, segm);
+	double mean = calcMean(image,w,h);
+	ChanVeseBranch root;
+	root.minb = 0;
+	root.maxb = (int)mean;
+	root.minf = (int)mean + 1;
+	root.maxf = 255;
+	root.image = image;
+	return runBranchAndMincut(image, w, h, lambda/2, mu, segm, root);
+}
+
+bool calcSSD(int* image, int w, int h, int b, int f, int bound){
+	int total = 0;
+	for (int i = 0; i < w*h; ++i){
+		if (abs(image[i] - f) > abs(image[i] - b)) {
+			total += (image[i] - b) * (image[i] - b);
+		} else {
+			total += (image[i] - f) * (image[i] - f);
+		}
+		if (total >= bound) return false;
+	}
+	return true;
+}
+
+ChanVeseBranch* calcFeasibleRegion(int* image, int w, int h, int bound) {
+	double mean = calcMean(image, w, h);
+	ChanVeseBranch root;
+	root.image = image;
+	root.minb = -1;
+	root.maxb = -1;
+	root.minf = -1;
+	root.maxf = -1;
+	for (int b = 0; b <= (int)mean; ++b){
+		if (root.minb != -1) break;
+		for (int f = (int)mean + 1; f <= 255; ++f) {	
+			if (calcSSD(image, w, h, b, f, bound)) {
+				root.minb = b;
+				break;
+			}
+		}
+	}
+	for (int b = (int)mean; b >= 0; --b){
+		if (root.maxb != -1) break;
+		for (int f = (int)mean + 1; f <= 255; ++f) {	
+			if (calcSSD(image, w, h, b, f, bound)) {
+				root.maxb = b;
+				break;
+			}
+		}
+	}
+	for (int f = (int)mean + 1; f <= 255; ++f){
+		if (root.minf != -1) break;
+		for (int b = root.minb; b <= root.maxb; ++b) {		
+			if (calcSSD(image, w, h, b, f, bound)) {
+				root.minf = f;
+				break;
+			}
+		}
+	}
+	for (int f = 255; f >= (int)mean + 1; --f){
+		if (root.maxf != -1) break;
+		for (int b = root.minb; b <= root.maxb; ++b) {		
+			if (calcSSD(image, w, h, b, f, bound)) {
+				root.maxf = f;
+				break;
+			}
+		}
+	}
+	return &root;
+}
+
+ChanVeseBranch* origImageSeg(const char* path, int lambda, int mu, int** segm,
+							 int est_cf, int est_cb){
+	int* image;
+	int w, h;
+	image = LoadImage8bpp<gtype>(path, w, h); 
+	if(!image)
+	{
+		puts("Invalid path to the test image!");
+		return NULL;
+	}
+	ChanVeseBranch root;
+	root.maxb = std::min(est_cb + 10, 255);
+	root.minb = std::max(0, est_cb - 10);
+	root.maxf = std::min(255, est_cf + 10);
+	root.minf = std::max(0, est_cf - 10);
+	root.image = image;
+/*
+	printf("Estimating lower bound...");
+
+	ChanVeseBranch* resultLeaf = runBranchAndMincut(
+								image, w, h, lambda, mu, segm, root);
+	int bound = resultLeaf->bound;
+
+	printf("done.\nLower bound = %d.\n\n", bound);
+	printf("Calculating feasible region...");
+
+	root = *calcFeasibleRegion(image, w, h, bound);
+
+	printf("done.\n");
+	printf("Feasible region: c_b in [%d, %d], c_f in [%d, %d].\n\n",
+		root.minb, root.maxb, root.minf, root.maxf);
+*/
+	ChanVeseBranch* resultLeaf = runBranchAndMincut(image, w, h, lambda, mu, segm, root);
+	return resultLeaf;
 }
 
 void visualize(const char* path, int* segm){
@@ -134,21 +239,42 @@ void visualize(const char* path, int* segm){
 
 int main()
 {
-	double totalTime = -clock();
-	const char *rPath = "test.png";
-	const char *path = "lake_google_maps.png";
+	const char *thumbPath = "lake_google_4.png";
+	const char *origPath  = "lake_google_1.png";
+	int lambda = 10000;
+	int mu = 0;
+
 	int** segm = new (int*);
 	*segm = NULL;
 
-	ChanVeseBranch* resultLeaf = thumbsnailEstimate(rPath, 10000, 0, segm);
+	double totalTime = -clock();
+
+	printf("Running thumbsnail estimator...");
+
+	ChanVeseBranch* resultLeaf = thumbsnailEstimate(thumbPath, lambda, mu);
+
+	printf("done.\n");
+
+	delete[] *segm;
+	int est_cf = resultLeaf->maxf;
+	int est_cb = resultLeaf->maxb;
+	delete resultLeaf;
+
+	printf("Estimated c_b = %d, c_f = %d.\n\n", est_cb, est_cf);
+	
+	printf("Segmenting original image...");
+
+	resultLeaf = origImageSeg(origPath, lambda, mu, segm, est_cf, est_cb);
+
 	totalTime += clock();
 	totalTime /= CLOCKS_PER_SEC;
+
+	printf("done.\n");
 	printf("Total Time = %lf.\n", totalTime);
-
-	printf("c_b = %lf, c_f = %lf\n", double(resultLeaf->minb), double(resultLeaf->minf));
+	printf("Energy = %d, c_b = %d, c_f = %d\n", 
+		resultLeaf->bound, resultLeaf->minb, resultLeaf->minf);
 	
-	visualize(rPath, *segm);
-
+	visualize(origPath, *segm);
 
 	delete resultLeaf;
 	delete[] *segm;
