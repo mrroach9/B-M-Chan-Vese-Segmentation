@@ -239,8 +239,8 @@ void visualize(const char* path, int* segm){
 
 int main()
 {
-	const char *thumbPath = "lake_google_4.png";
-	const char *origPath  = "lake_google_1.png";
+	const char *thumbPath = "lake3_20.png";
+	const char *origPath  = "lake3_20.png";
 	int lambda = 10000;
 	int mu = 0;
 
