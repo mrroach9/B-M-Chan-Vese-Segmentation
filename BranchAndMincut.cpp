@@ -64,7 +64,6 @@ struct
 					graph->add_tweights(i, 0, -commonUnaries[i]);
 			}
 
-
 		for(y = 0, i = 0; y < imHeight; y++)
 			for(x = 0; x < imWidth; x++, i++)
 			{
@@ -73,7 +72,6 @@ struct
 				if(y < imHeight-1 && x < imWidth-1)	graph->add_edge(i, i+imWidth+1, pairwise[i*4+2], pairwise[i*4+2]);
 				if(y < imHeight-1)	graph->add_edge(i, i+imWidth, pairwise[i*4+3], pairwise[i*4+3]);
 			}
-
 		memset(fgUnaries, 0, sizeof(gtype)*imWidth*imHeight);
 		memset(bgUnaries, 0, sizeof(gtype)*imWidth*imHeight);
 	}
@@ -254,7 +252,7 @@ gtype EvaluateBound(Branch *br)
 		br->Clone(&bestBranch);
 		for(i = 0; i < imsize; i++)
 			bestSegm[i] = (int)reusable.graph->what_segment(i);
-		printf("Bound value = %lf\n", double(boundVal));
+//		printf("Bound value = %lf\n", double(boundVal));
 	}
 
 	return boundVal;
@@ -278,14 +276,12 @@ bool BestFirstSearch()
 	br->BranchFurther(&br1, &br2);
 	delete br;
 
-	if ( !br1->prune()) {
-		EvaluateBound(br1);
-		frontQueue.push(BranchWrapper(br1));
-	}
-	if ( !br2->prune()) {
-		EvaluateBound(br2);
-		frontQueue.push(BranchWrapper(br2));
-	}
+	EvaluateBound(br1);
+	frontQueue.push(BranchWrapper(br1));
+
+	EvaluateBound(br2);
+	frontQueue.push(BranchWrapper(br2));
+
 	return true;
 }
 

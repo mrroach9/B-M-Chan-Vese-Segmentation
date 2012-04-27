@@ -42,7 +42,6 @@ public:
 	
 	virtual void GetUnaries(gtype *bgUnaries, gtype *fgUnaries) = 0; //needs to be defined. Should fill in the arrays of aggregated unary potentials
 																	//for the background and for the foreground
-	virtual bool prune() { return false; }
 };
 
 //these two functions should be called before and after all procedures (or in the case if the image size changes)

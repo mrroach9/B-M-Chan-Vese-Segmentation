@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include "graph.h"
-
+#include <time.h>
 
 /*
 	special constants for node->parent
@@ -154,10 +154,11 @@ template <typename captype, typename tcaptype, typename flowtype>
 		}
 	}
 }
-
+int init = 0;
 template <typename captype, typename tcaptype, typename flowtype> 
 	void Graph<captype,tcaptype,flowtype>::maxflow_reuse_trees_init()
 {
+	init -= clock();
 	node* i;
 	node* j;
 	node* queue = queue_first[1];
@@ -169,9 +170,10 @@ template <typename captype, typename tcaptype, typename flowtype>
 	orphan_first = orphan_last = NULL;
 
 	TIME ++;
-//	std::vector<int>::
+	int count = 0;
 	while ((i=queue))
 	{
+		++count;
 		queue = i->next;
 		if (queue == i) queue = NULL;
 		i->next = NULL;
@@ -236,8 +238,7 @@ template <typename captype, typename tcaptype, typename flowtype>
 		else            process_source_orphan(i);
 	}
 	/* adoption end */
-
-	//test_consistency();
+	init += clock();
 }
 
 template <typename captype, typename tcaptype, typename flowtype> 

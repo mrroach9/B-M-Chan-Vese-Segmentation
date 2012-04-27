@@ -31,7 +31,7 @@ public:
 	int maxb;
 	int minf;
 	int maxf;
-	int mean;
+	int* image;
 
 	virtual bool IsLeaf()
 	{
@@ -47,11 +47,12 @@ public:
 		*br_ = new ChanVeseBranch;
 		ChanVeseBranch *br = (ChanVeseBranch *)*br_;
 		br->bound = bound;
-		br->mean = mean;
+
 		br->minb = minb;
 		br->maxb = maxb;
 		br->minf = minf;
 		br->maxf = maxf;
+		br->image = image;
 	}
 
 	virtual gtype GetConstant()
@@ -61,19 +62,6 @@ public:
 	}
 	
 	virtual void GetUnaries(gtype *bgUnaries, gtype *fgUnaries); //see cpp file
-
-	virtual bool prune() {
-		if (maxb < mean && maxf < mean) {
-			return true;
-		} else if (minb > mean && minf > mean) {
-			return true;
-		}
-		return false;
-	}
 };
-
-
-
-
 
 #endif
