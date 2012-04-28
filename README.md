@@ -3,11 +3,12 @@
 COMP790-098 Course Project
 
 ### Introduction
-This program derives from the paper [1] by Lempitsky et. al. that using Branch-and-Mincut 
-framework on segmenting images using Chan-Vese model, by discretizing the foreground and
+This program derives from the paper [1] by Lempitsky et. al. , in which they developed the Branch-and-Mincut 
+framework on segmenting images with application on Chan-Vese model, by discretizing the foreground and
 background mean colors c_f and c_b into 255 levels and do tree-search on each quad-interval.
 The maxflow algorithm used in calculting graph cuts in this program comes from Boykov and 
-Kolmogorov's paper[2], and Kohli and Torr's paper[3].
+Kolmogorov's paper[2], and Kohli and Torr's paper[3]. In this project we improved this method
+for a much faster running time.
 
 ### Our Work
 
@@ -32,7 +33,8 @@ energy function of C-V model, we can add another constrint that c_b < c_f, there
    reduce the smooth term lambda to half so that the smoothness is invariant under scaling),
    then segment the original image in a pretty small range of (c_b, c_f).
 
-###Future Works
+
+### Future Works
 
 1) The network flow algorithm can be further improved by using priority queue instead of normal
 FIFO queue, picking the highset labeled node every time when augmenting, yielding an O(V^2* sqrt(E))
